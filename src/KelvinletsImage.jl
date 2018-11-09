@@ -1,7 +1,7 @@
 module KelvinletsImage
 
     include("triangleInterpolator.jl")
-    using Images, ProgressMeter, ImageView
+    using Images, ProgressMeter, ImageView, LinearAlgebra
     export KelvinletsObject, grab, scale, pinch, makeVideo
     
     struct KelvinletsObject
@@ -160,12 +160,12 @@ module KelvinletsImage
         )::Array{RGB{N0f8},3}
         
         if typeof(force) == Float64
-            var = linspace(0, force, frames)
+            var = range(0, stop=force, length=frames)
         else    
-            var = linspace(fill(0, size(force)), force, frames)    
+            var = range(fill(0, size(force)), stop=force, length=frames)    
         end
         
-        video = Array{RGB{N0f8}}(object.sizeY, object.sizeX, frames)
+        video = Array{RGB{N0f8}}(undef, object.sizeY, object.sizeX, frames)
         @showprogress for i=1:frames
             video[:,:,i] = kelvinletsFunction(object, x0, var[i], ϵ)
         end

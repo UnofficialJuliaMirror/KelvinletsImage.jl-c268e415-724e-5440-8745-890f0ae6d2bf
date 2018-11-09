@@ -111,7 +111,7 @@ module triangleInterpolator
                                colorA::RGB{N0f8},
                                colorB::RGB{N0f8},
                                colorC::RGB{N0f8}
-            )::Void
+            )
 
         maxHeight, minHeight, maxWidth, minWidth = setupBBOX(A, B, C, size(img)[2], size(img)[1])
         ax, ay, bx, by, cx, cy = A[2], A[1], B[2], B[1], C[2], C[1]
