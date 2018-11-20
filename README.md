@@ -7,7 +7,7 @@ Date: Nov. 8th, 2018
 
 Implementation for Kelvinlets Deformations presented on 
 [Regularized Kelvinlets: Sculpting Brushes based on Fundamental Solutions of Elasticity](https://graphics.pixar.com/library/Kelvinlets/paper.pdf) 
-from *Fernando De Goes* and *Doug L. James* on **Julia v0.6**.
+from *Fernando De Goes* and *Doug L. James* on **Julia v1.0**.
 
 Deformations for the *Grab*, *Scale* and *Pinch* brushes. 
 
