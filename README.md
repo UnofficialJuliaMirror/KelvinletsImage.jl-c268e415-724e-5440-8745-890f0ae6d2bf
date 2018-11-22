@@ -9,7 +9,7 @@ Implementation for Kelvinlets Deformations presented on
 [Regularized Kelvinlets: Sculpting Brushes based on Fundamental Solutions of Elasticity](https://graphics.pixar.com/library/Kelvinlets/paper.pdf) 
 from *Fernando De Goes* and *Doug L. James* on **Julia v1.0**.
 
-Deformations for the *Grab*, *Scale* and *Pinch* brushes. 
+Deformations for the *Grab*, *Scale* and *Pinch* brushes. Including a **Rectangle** brush for the *Grab* function.
 
 ---
 
@@ -89,9 +89,9 @@ After initializing the presented object, you will use ir for further operations.
     using KelvinletsImage
 
     pressurePosition = [256, 256]
-    forceVector = [0. 0.; 0. 300000.]
+    forceMatrix = [0. 0.; 0. 300000.]
     ϵ = 300. # Brush Size
-    grabbedImage = pinch(object, pressurePosition, forceVector, ϵ)
+    grabbedImage = pinch(object, pressurePosition, forceMatrix, ϵ)
 ```
 
 ![grabbed image](./sampleImages/pinch.png)
@@ -100,7 +100,31 @@ After initializing the presented object, you will use ir for further operations.
     using KelvinletsImage
 
     frames = 20
-    grabbedImageGIF = makeVideo(object, pinch, pressurePosition, forceVector, ϵ, frames)
+    grabbedImageGIF = makeVideo(object, pinch, pressurePosition, forceMatrix, ϵ, frames)
 ```
 
 ![grabbed image GIF](./sampleImages/pinchVid.gif)
+
+
+### Grab Rectangle Brush
+
+
+```julia
+    using KelvinletsImage
+
+    pressureRectangle = [156 156; 256 256]
+    forceVector = [150., 150.]
+    ϵ = 50. # Brush Size
+    grabbedImage = pinch(object, pressureRectangle, forceVector, ϵ)
+```
+
+![grabbed image](./sampleImages/grabRectangle.png)
+
+```julia
+    using KelvinletsImage
+
+    frames = 20
+    grabbedImageGIF = makeVideo(object, grabRectangle, pressureRectangle, forceVector, ϵ, frames)
+```
+
+![grabbed image GIF](./sampleImages/grabRectangle.gif)
