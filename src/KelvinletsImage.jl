@@ -4,6 +4,18 @@ module KelvinletsImage
     using Images, ProgressMeter, ImageView, LinearAlgebra
     export KelvinletsObject, grab, scale, pinch, grabRectangle, makeVideo
     
+    """
+        KelvinletsObject(image::AbstractArray{RGB{N0f8}, 2}, ν::Float64, μ::Float64)
+
+    Initializes KelvinletsObject for a given image *image*,
+    poisson ratio *ν*
+    and elastic shear modulus *μ*
+
+    # Example:
+    ```julia-repl
+    julia> object = KelvinletsObject(image, 0.4, 1.)
+    ```
+    """
     struct KelvinletsObject
         a::Float64
         b::Float64
@@ -152,7 +164,7 @@ module KelvinletsImage
     and a brush size *ϵ*
     # Example:
     ```julia-repl
-        grab(obj, [100, 100], [100., 0.], 50.)
+        julia> newImage = grab(obj, [100, 100], [100., 0.], 50.)
     ```
     """    
     function grab(object::KelvinletsObject,
@@ -185,7 +197,7 @@ module KelvinletsImage
     and a brush size *ϵ*
     # Example:
     ```julia-repl
-        julia> scale(obj, [100, 100], 50., 50.)
+        julia> newImage = scale(obj, [100, 100], 50., 50.)
     ```
     """
     function scale(object::KelvinletsObject,
@@ -219,7 +231,7 @@ module KelvinletsImage
     and a brush size *ϵ*
     # Example:
     ```julia-repl
-        julia> pinch(obj, [100, 100], [10000. 0. ; 10000. 0.], 50.)
+        julia> newImage = pinch(obj, [100, 100], [10000. 0. ; 10000. 0.], 50.)
     ```
     """
     function pinch(object::KelvinletsObject,
@@ -252,7 +264,7 @@ module KelvinletsImage
     and a given brush size *ϵ* (to calculate te variation of outside pixels)
     # Example:
     ```julia-repl
-        julia> grabRectangle(obj, [100 100 ; 250 250], [100., 0.], 50.)
+        julia> newImage = grabRectangle(obj, [100 100 ; 250 250], [100., 0.], 50.)
     ```
     """
     function grabRectangle(object::KelvinletsObject,
@@ -290,7 +302,7 @@ module KelvinletsImage
     and a number of frames *frames*
     # Example
     ```julia-repl
-        makeVideo(object, grab, [100, 100], [200., 0.], 70., 20)
+        julia> video = (object, grab, [100, 100], [200., 0.], 70., 20)
     ```
     """
     function makeVideo(object::KelvinletsObject,
