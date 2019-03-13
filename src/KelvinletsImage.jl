@@ -49,9 +49,9 @@ module KelvinletsImage
             for j=1:object.sizeX
                 Δ = variationFunction([i, j])
 
-                dx1 = j
+                dx1 = j - 1
                 dx2 = object.sizeX - j
-                dy1 = i
+                dy1 = i - 1
                 dy2 = object.sizeY - i
 
                 dx = min(dx1, dx2)
@@ -180,6 +180,60 @@ module KelvinletsImage
         end
         return __interpolateVariation__(object, allΔ)
 
+    end
+
+    function __applyAreaVariation3__(object::KelvinletsObject,
+                                points::Array{Int64, 2},
+                                variationFunction::Function,
+                                retardationFunction::Function
+            )::Array{RGB{N0f8}, 2}
+
+      minX, maxX = points[:, 1]
+      minY, maxY = points[:, 2]
+    
+      allΔ = zeros(object.sizeY, object.sizeX, 2)
+      numOfPixels = (maxY - minY) * (maxX - minX)
+    
+      @showprogress for i=1:object.sizeY
+        for j=1:object.sizeX
+          if j >= minX && j <= maxX && i >= minY && i <= maxY
+            Δ = variationFunction([i, j], [i, j])
+          else
+            d1 = norm([i, j] - [minY, minX])
+            d2 = norm([i, j] - [minY, maxX])
+            d3 = norm([i, j] - [maxY, minX])
+            d4 = norm([i, j] - [maxY, maxX])
+
+            desloc1 = variationFunction([i, j], [minY, minX])
+            desloc2 = variationFunction([i, j], [minY, maxX])
+            desloc3 = variationFunction([i, j], [maxY, minX])
+            desloc4 = variationFunction([i, j], [maxY, maxX])
+
+            Δ = ((1/d1) * desloc1 + (1/d2) * desloc2 + (1/d3) * desloc3 + (1/d4) * desloc4) / ((1/d1) + (1/d2) + (1/d3) + (1/d4))
+
+          end
+    
+          dx1 = j
+          dx2 = object.sizeX - j
+          dy1 = i
+          dy2 = object.sizeY - i
+    
+          dx = min(dx1, dx2)
+          dy = min(dy1, dy2)
+    
+          y = 2(object.sizeY/2 - dy)/object.sizeY
+          x = 2(object.sizeX/2 - dx)/object.sizeX
+    
+          Δ[1] *= retardationFunction(y)
+          Δ[2] *= retardationFunction(x)
+    
+          Δ += [i, j]
+    
+          allΔ[i, j, 1] = Δ[1]
+          allΔ[i, j, 2] = Δ[2]
+        end
+      end
+      return __interpolateVariation__(object, allΔ)
     end
 
     function __interpolateVariation__(object::KelvinletsObject,
@@ -341,7 +395,7 @@ module KelvinletsImage
         end
 
         retardationFunc = α -> (cos(π * α) + 1) / 2
-        return __applyAreaVariation2__(object, points, grabFunc, retardationFunc)
+        return __applyAreaVariation3__(object, points, grabFunc, retardationFunc)
 
     end
 
