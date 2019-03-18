@@ -194,6 +194,8 @@ module KelvinletsImage
       allΔ = zeros(object.sizeY, object.sizeX, 2)
       numOfPixels = (maxY - minY) * (maxX - minX)
     
+      testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
+
       @showprogress for i=1:object.sizeY
         for j=1:object.sizeX
           if j >= minX && j <= maxX && i >= minY && i <= maxY
@@ -224,15 +226,21 @@ module KelvinletsImage
           y = 2(object.sizeY/2 - dy)/object.sizeY
           x = 2(object.sizeX/2 - dx)/object.sizeX
     
-          Δ[1] *= retardationFunction(y)
-          Δ[2] *= retardationFunction(x)
+          #Δ[1] *= retardationFunction(y)
+          #Δ[2] *= retardationFunction(x)
     
+          # maxnorm = norm([object.sizeY, object.sizeX])
+
+          # testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
+
           Δ += [i, j]
-    
+
+
           allΔ[i, j, 1] = Δ[1]
           allΔ[i, j, 2] = Δ[2]
         end
       end
+      #return testImg
       return __interpolateVariation__(object, allΔ)
     end
 
