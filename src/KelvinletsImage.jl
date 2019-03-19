@@ -182,67 +182,124 @@ module KelvinletsImage
 
     end
 
-    function __applyAreaVariation3__(object::KelvinletsObject,
-                                points::Array{Int64, 2},
-                                variationFunction::Function,
-                                retardationFunction::Function
+    function __applyPerimeterBasedAreaVariation__(object::KelvinletsObject,
+                                    points::Array{Int64, 2},
+                                    variationFunction::Function,
+                                    retardationFunction::Function
             )::Array{RGB{N0f8}, 2}
 
-      minX, maxX = points[:, 1]
-      minY, maxY = points[:, 2]
-    
-      allΔ = zeros(object.sizeY, object.sizeX, 2)
-      numOfPixels = (maxY - minY) * (maxX - minX)
-    
-      testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
+        minX, maxX = points[:, 1]
+        minY, maxY = points[:, 2]
 
-      @showprogress for i=1:object.sizeY
-        for j=1:object.sizeX
-          if j >= minX && j <= maxX && i >= minY && i <= maxY
-            Δ = variationFunction([i, j], [i, j])
-          else
-            d1 = norm([i, j] - [minY, minX])
-            d2 = norm([i, j] - [minY, maxX])
-            d3 = norm([i, j] - [maxY, minX])
-            d4 = norm([i, j] - [maxY, maxX])
+        allΔ = zeros(object.sizeY, object.sizeX, 2)
+        numOfPixels = (maxY - minY) * (maxX - minX)
 
-            desloc1 = variationFunction([i, j], [minY, minX])
-            desloc2 = variationFunction([i, j], [minY, maxX])
-            desloc3 = variationFunction([i, j], [maxY, minX])
-            desloc4 = variationFunction([i, j], [maxY, maxX])
+        @showprogress for i=1:object.sizeY
+            for j=1:object.sizeX
 
-            Δ = ((1/d1) * desloc1 + (1/d2) * desloc2 + (1/d3) * desloc3 + (1/d4) * desloc4) / ((1/d1) + (1/d2) + (1/d3) + (1/d4))
+                divided = [0., 0.]
+                divisor = 0.
 
-          end
-    
-          dx1 = j
-          dx2 = object.sizeX - j
-          dy1 = i
-          dy2 = object.sizeY - i
-    
-          dx = min(dx1, dx2)
-          dy = min(dy1, dy2)
-    
-          y = 2(object.sizeY/2 - dy)/object.sizeY
-          x = 2(object.sizeX/2 - dx)/object.sizeX
-    
-          #Δ[1] *= retardationFunction(y)
-          #Δ[2] *= retardationFunction(x)
-    
-          # maxnorm = norm([object.sizeY, object.sizeX])
+                for k = minX:maxX
+                    d = norm([i, j] - [minY, k]) + 1
+                    divided += (1/d) * [minY, k]
+                    divisor += 1/d
+                end
 
-          # testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
+                for k = minX+1:maxX-1
+                    d = norm([i, j] - [maxY, k]) + 1
+                    divided += (1/d) * [maxY, k]
+                    divisor += 1/d
+                end
 
-          Δ += [i, j]
+                for k = minY+1:maxY
+                    d = norm([i, j] - [k, minX]) + 1
+                    divided += (1/d) * [k, minX]
+                    divisor += 1/d
+                end
 
+                for k = minY+1:maxX
+                    d = norm([i, j] - [k, maxX]) + 1
+                    divided += (1/d) * [k, maxX]
+                    divisor += 1/d
+                end
 
-          allΔ[i, j, 1] = Δ[1]
-          allΔ[i, j, 2] = Δ[2]
+                newReference = divided/divisor
+                Δ = variationFunction([i, j], round.(Int64, newReference))
+
+                dx1 = j
+                dx2 = object.sizeX - j
+                dy1 = i
+                dy2 = object.sizeY - i
+
+                dx = min(dx1, dx2)
+                dy = min(dy1, dy2)
+
+                y = 2(object.sizeY/2 - (dy - 1))/object.sizeY
+                x = 2(object.sizeX/2 - (dx - 1))/object.sizeX
+
+                Δ[1] *= retardationFunction(y)
+                Δ[2] *= retardationFunction(x)
+
+                Δ += [i, j]
+                allΔ[i, j, 1] = Δ[1]
+                allΔ[i, j, 2] = Δ[2]
+            end
         end
-      end
-      #return testImg
       return __interpolateVariation__(object, allΔ)
     end
+
+    function __applyEdgeBasedAreaVariation__(object::KelvinletsObject,
+                                    points::Array{Int64, 2},
+                                    variationFunction::Function,
+                                    retardationFunction::Function
+            )::Array{RGB{N0f8}, 2}
+
+        minX, maxX = points[:, 1]
+        minY, maxY = points[:, 2]
+
+        allΔ = zeros(object.sizeY, object.sizeX, 2)
+        numOfPixels = (maxY - minY) * (maxX - minX)
+
+        @showprogress for i=1:object.sizeY
+            for j=1:object.sizeX
+
+                d1 = norm([i, j] - [minY, minX]) + 1
+                d2 = norm([i, j] - [minY, maxX]) + 1
+                d3 = norm([i, j] - [maxY, minX]) + 1
+                d4 = norm([i, j] - [maxY, maxX]) + 1
+
+                newReference = ((1/d1) * [minY, minX] + (1/d2) * [minY, maxX] + (1/d3) * [maxY, minX] + (1/d4) * [maxY, maxX]) / ((1/d1) + (1/d2) + (1/d3) + (1/d4))
+                Δ = variationFunction([i, j], round.(Int64, newReference))
+
+                dx1 = j
+                dx2 = object.sizeX - j
+                dy1 = i
+                dy2 = object.sizeY - i
+        
+                dx = min(dx1, dx2)
+                dy = min(dy1, dy2)
+        
+                y = 2(object.sizeY/2 - (dy - 1))/object.sizeY
+                x = 2(object.sizeX/2 - (dx - 1))/object.sizeX
+        
+                Δ[1] *= retardationFunction(y)
+                Δ[2] *= retardationFunction(x)
+
+                Δ += [i, j]
+                allΔ[i, j, 1] = Δ[1]
+                allΔ[i, j, 2] = Δ[2]
+            end
+          end
+        return __interpolateVariation__(object, allΔ)
+    end
+
+# WRITE THIS CODE BELOW TO GENERATE THE HEATMAP 
+# 
+# testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)         
+# maxnorm = norm([object.sizeY, object.sizeX])
+# testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
+# return testImg
 
     function __interpolateVariation__(object::KelvinletsObject,
                                       allΔ::Array{Float64, 3}
@@ -387,7 +444,7 @@ module KelvinletsImage
                            points::Array{Int64, 2},
                            force::Array{Float64},
                            ϵ::Float64
-            )::Array{RGB{N0f8}, 2}
+            )
 
         grabFunc = function(x::Array{Int64},
                             x0::Array{Int64}
@@ -403,7 +460,7 @@ module KelvinletsImage
         end
 
         retardationFunc = α -> (cos(π * α) + 1) / 2
-        return __applyAreaVariation3__(object, points, grabFunc, retardationFunc)
+        return __applyEdgeBasedAreaVariation__(object, points, grabFunc, retardationFunc)
 
     end
 
