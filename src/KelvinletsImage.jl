@@ -2,7 +2,7 @@ module KelvinletsImage
 
     include("triangleInterpolator.jl")
     using Images, ProgressMeter, ImageView, LinearAlgebra
-    export KelvinletsObject, grab, scale, pinch, grabRectangle, makeVideo
+    export KelvinletsObject, grab, scale, pinch, grabRectangle, makeVideo, __applyAreaVariation__, __applyCloserAreaVariation__, __applyPerimeterBasedAreaVariation__, __applyEdgeBasedAreaVariation__, __applyPonderedAvgAreaVariation__
     
     """
         KelvinletsObject(image::AbstractArray{RGB{N0f8}, 2}, ν::Float64, μ::Float64)
@@ -75,13 +75,17 @@ module KelvinletsImage
     function __applyAreaVariation__(object::KelvinletsObject,
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
-                                    retardationFunction::Function
+                                    retardationFunction::Function,
+                                    heatmap
             )::Array{RGB{N0f8}, 2}
         
         minX, maxX = points[:, 1]
         minY, maxY = points[:, 2]
 
         allΔ = zeros(object.sizeY, object.sizeX, 2)
+
+        testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
+
         for i=1:object.sizeY
             for j=1:object.sizeX
 
@@ -119,25 +123,34 @@ module KelvinletsImage
                 Δ[1] *= retardationFunction(y)
                 Δ[2] *= retardationFunction(x)
 
+                maxnorm = norm([object.sizeY, object.sizeX])
+                testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
+
                 Δ += [i, j]
 
                 allΔ[i, j, 1] = Δ[1]
                 allΔ[i, j, 2] = Δ[2]
             end
         end
+        if heatmap
+            return testImg
+        end
         return __interpolateVariation__(object, allΔ)
     end
 
-    function __applyAreaVariation2__(object::KelvinletsObject,
+    function __applyCloserAreaVariation__(object::KelvinletsObject,
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
-                                    retardationFunction::Function
+                                    retardationFunction::Function,
+                                    heatmap
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
         minY, maxY = points[:, 2]
 
         allΔ = zeros(object.sizeY, object.sizeX, 2)
+
+        testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
         for i=1:object.sizeY
             for j=1:object.sizeX
 
@@ -171,12 +184,18 @@ module KelvinletsImage
 
                 Δ[1] *= retardationFunction(y)
                 Δ[2] *= retardationFunction(x)
+                
+                maxnorm = norm([object.sizeY, object.sizeX])
+                testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
 
                 Δ += [i, j]
 
                 allΔ[i, j, 1] = Δ[1]
                 allΔ[i, j, 2] = Δ[2]
             end
+        end
+        if heatmap
+            return testImg
         end
         return __interpolateVariation__(object, allΔ)
 
@@ -185,7 +204,8 @@ module KelvinletsImage
     function __applyPerimeterBasedAreaVariation__(object::KelvinletsObject,
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
-                                    retardationFunction::Function
+                                    retardationFunction::Function,
+                                    heatmap
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -193,6 +213,8 @@ module KelvinletsImage
 
         allΔ = zeros(object.sizeY, object.sizeX, 2)
         numOfPixels = (maxY - minY) * (maxX - minX)
+
+        testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
 
         @showprogress for i=1:object.sizeY
             for j=1:object.sizeX
@@ -240,19 +262,26 @@ module KelvinletsImage
 
                 Δ[1] *= retardationFunction(y)
                 Δ[2] *= retardationFunction(x)
+        
+                maxnorm = norm([object.sizeY, object.sizeX])
+                testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
 
                 Δ += [i, j]
                 allΔ[i, j, 1] = Δ[1]
                 allΔ[i, j, 2] = Δ[2]
             end
         end
-      return __interpolateVariation__(object, allΔ)
+        if heatmap
+            return testImg
+        end
+        return __interpolateVariation__(object, allΔ)
     end
 
     function __applyEdgeBasedAreaVariation__(object::KelvinletsObject,
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
-                                    retardationFunction::Function
+                                    retardationFunction::Function,
+                                    heatmap
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -260,6 +289,8 @@ module KelvinletsImage
 
         allΔ = zeros(object.sizeY, object.sizeX, 2)
         numOfPixels = (maxY - minY) * (maxX - minX)
+
+        testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
 
         @showprogress for i=1:object.sizeY
             for j=1:object.sizeX
@@ -286,11 +317,77 @@ module KelvinletsImage
                 Δ[1] *= retardationFunction(y)
                 Δ[2] *= retardationFunction(x)
 
+
+                maxnorm = norm([object.sizeY, object.sizeX])
+                testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
+
+
                 Δ += [i, j]
                 allΔ[i, j, 1] = Δ[1]
                 allΔ[i, j, 2] = Δ[2]
             end
-          end
+        end
+        if heatmap
+            return testImg
+        end
+        return __interpolateVariation__(object, allΔ)
+    end
+
+    function __applyPonderedAvgAreaVariation__(object::KelvinletsObject,
+                                    points::Array{Int64, 2},
+                                    variationFunction::Function,
+                                    retardationFunction::Function,
+                                    heatmap
+            )::Array{RGB{N0f8}, 2}
+
+        minX, maxX = points[:, 1]
+        minY, maxY = points[:, 2]
+
+        allΔ = zeros(object.sizeY, object.sizeX, 2)
+        numOfPixels = (maxY - minY) * (maxX - minX)
+
+        testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)
+
+        @showprogress for i=1:object.sizeY
+            for j=1:object.sizeX
+
+                d1 = norm([i, j] - [minY, minX]) + 1
+                d2 = norm([i, j] - [minY, maxX]) + 1
+                d3 = norm([i, j] - [maxY, minX]) + 1
+                d4 = norm([i, j] - [maxY, maxX]) + 1
+
+                deform1 = variationFunction([i,j], [minY, minX])
+                deform2 = variationFunction([i,j], [minY, maxX])
+                deform3 = variationFunction([i,j], [maxY, minX])
+                deform4 = variationFunction([i,j], [maxY, maxX])
+
+                Δ = ((1/d1) * deform1 + (1/d2) * deform1 + (1/d3) * deform1 + (1/d4) * deform1) / ((1/d1) + (1/d2) + (1/d3) + (1/d4))
+
+                dx1 = j
+                dx2 = object.sizeX - j
+                dy1 = i
+                dy2 = object.sizeY - i
+        
+                dx = min(dx1, dx2)
+                dy = min(dy1, dy2)
+        
+                y = 2(object.sizeY/2 - (dy - 1))/object.sizeY
+                x = 2(object.sizeX/2 - (dx - 1))/object.sizeX
+        
+                Δ[1] *= retardationFunction(y)
+                Δ[2] *= retardationFunction(x)
+
+                maxnorm = norm([object.sizeY, object.sizeX])
+                testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
+
+                Δ += [i, j]
+                allΔ[i, j, 1] = Δ[1]
+                allΔ[i, j, 2] = Δ[2]
+            end
+        end
+        if heatmap
+            return testImg
+        end
         return __interpolateVariation__(object, allΔ)
     end
 
@@ -443,8 +540,10 @@ module KelvinletsImage
     function grabRectangle(object::KelvinletsObject,
                            points::Array{Int64, 2},
                            force::Array{Float64},
-                           ϵ::Float64
-            )
+                           ϵ::Float64,
+                           areaVariation::Function,
+                           heatmap
+            )::Array{RGB{N0f8}, 2}
 
         grabFunc = function(x::Array{Int64},
                             x0::Array{Int64}
@@ -460,7 +559,7 @@ module KelvinletsImage
         end
 
         retardationFunc = α -> (cos(π * α) + 1) / 2
-        return __applyEdgeBasedAreaVariation__(object, points, grabFunc, retardationFunc)
+        return areaVariation(object, points, grabFunc, retardationFunc, heatmap)
 
     end
 
