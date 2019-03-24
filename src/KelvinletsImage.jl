@@ -50,10 +50,7 @@ module KelvinletsImage
         for i=1:object.sizeY
             for j=1:object.sizeX
                 Δ = variationFunction([i, j])
-                # if i == 175 && j == 175
-                #     @show Δ
-                # end
-
+                
                 dx1 = j - 1
                 dx2 = object.sizeX - j
                 dy1 = i - 1
@@ -62,11 +59,15 @@ module KelvinletsImage
                 dx = min(dx1, dx2)
                 dy = min(dy1, dy2)
 
-                y = 2(object.sizeY/2 - dy)/object.sizeY
-                x = 2(object.sizeX/2 - dx)/object.sizeX
+                y = 2(object.sizeY/2 - dy) / object.sizeY
+                x = 2(object.sizeX/2 - dx) / object.sizeX
 
                 Δ[1] *= retardationFunction(y)
                 Δ[2] *= retardationFunction(x)
+
+                #if i <= 250 && i >= 175 && j >= 175 && j <= 250
+                #    @show Δ
+                #end
 
                 maxnorm = norm([object.sizeY, object.sizeX])
                 # if isnan(norm(Δ)/maxnorm)
@@ -597,14 +598,10 @@ module KelvinletsImage
         db = norm(bx) + 1
         dc = norm(cx) + 1
         dd = norm(dx) + 1
-
-        # if x == [175, 175]
-        #     @show At, Aa, Ab, Ac, Ad, abs(log(At/(Aa + Ab + Ac + Ad))),((1/da) * a), (1/db) * b + (1/dc) * c + (1/dd) * d)
-        # end
         
-        return (((Aa + Ab + Ac + Ad)/At)) * 
-                   (x - 
-                   ((1/da) * a + (1/db) * b + (1/dc) * c + (1/dd) * d))
+        return 1/5 * ((At/(Aa + Ab + Ac + Ad)) - 1) * 
+                   (x - [(c[1] - a[1])/2, (b[2] - a[2])/2]) 
+                   #((1/da) * a + (1/db) * b + (1/dc) * c + (1/dd) * d))
     end
 
 
@@ -612,7 +609,6 @@ module KelvinletsImage
                            points::Array{Int64, 2},
                            force::Array{Float64},
                            ϵ::Float64,
-                           areaVariation::Function,
                            heatmap
             )::Array{RGB{N0f8}, 2}
 
@@ -673,7 +669,7 @@ module KelvinletsImage
         
         video = Array{RGB{N0f8}}(undef, object.sizeY, object.sizeX, frames)
         @showprogress for i=1:frames
-            video[:,:,i] = kelvinletsFunction(object, x0, var[i], ϵ)
+            video[:,:,i] = kelvinletsFunction(object, x0, var[i], ϵ, false)
         end
         imshow(video)
         return video
