@@ -599,9 +599,9 @@ module KelvinletsImage
         dc = norm(cx) + 1
         dd = norm(dx) + 1
         
-        return 1/5 * ((At/(Aa + Ab + Ac + Ad)) - 1) * 
-                   (x - [(c[1] - a[1])/2, (b[2] - a[2])/2]) 
-                   #((1/da) * a + (1/db) * b + (1/dc) * c + (1/dd) * d))
+        return 1/512 * ((At/(Aa + Ab + Ac + Ad)) - 1) * 
+                   (x - #[(c[1] - a[1])/2, (b[2] - a[2])/2]) 
+                   ((1/da) * a + (1/db) * b + (1/dc) * c + (1/dd) * d))/((1/da) + (1/db) + (1/dc) + (1/dd))
     end
 
 
