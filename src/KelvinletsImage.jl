@@ -41,7 +41,7 @@ module KelvinletsImage
     function __applyVariation__(object::KelvinletsObject,
                                 variationFunction::Function,
                                 retardationFunction::Function,
-                                heatmap
+                                heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         allΔ = zeros(object.sizeY, object.sizeX, 2)
@@ -65,14 +65,7 @@ module KelvinletsImage
                 Δ[1] *= retardationFunction(y)
                 Δ[2] *= retardationFunction(x)
 
-                #if i <= 250 && i >= 175 && j >= 175 && j <= 250
-                #    @show Δ
-                #end
-
                 maxnorm = norm([object.sizeY, object.sizeX])
-                # if isnan(norm(Δ)/maxnorm)
-                #     @show Δ, i, j
-                # end
                 testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
 
                 Δ += [i, j]
@@ -91,7 +84,7 @@ module KelvinletsImage
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
                                     retardationFunction::Function,
-                                    heatmap
+                                    heatmap::Bool
             )::Array{RGB{N0f8}, 2}
         
         minX, maxX = points[:, 1]
@@ -157,7 +150,7 @@ module KelvinletsImage
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
                                     retardationFunction::Function,
-                                    heatmap
+                                    heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -220,7 +213,7 @@ module KelvinletsImage
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
                                     retardationFunction::Function,
-                                    heatmap
+                                    heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -296,7 +289,7 @@ module KelvinletsImage
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
                                     retardationFunction::Function,
-                                    heatmap
+                                    heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -353,7 +346,7 @@ module KelvinletsImage
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
                                     retardationFunction::Function,
-                                    heatmap
+                                    heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -377,7 +370,8 @@ module KelvinletsImage
                 deform3 = variationFunction([i,j], [maxY, minX])
                 deform4 = variationFunction([i,j], [maxY, maxX])
 
-                Δ = ((1/d1) * deform1 + (1/d2) * deform1 + (1/d3) * deform1 + (1/d4) * deform1) / ((1/d1) + (1/d2) + (1/d3) + (1/d4))
+                Δ = ((1/d1) * deform1 + (1/d2) * deform1 + (1/d3) * deform1 + (1/d4) * deform1) /
+                     ((1/d1) + (1/d2) + (1/d3) + (1/d4))
 
                 dx1 = j
                 dx2 = object.sizeX - j
@@ -407,13 +401,6 @@ module KelvinletsImage
         return __interpolateVariation__(object, allΔ)
     end
 
-# WRITE THIS CODE BELOW TO GENERATE THE HEATMAP 
-# 
-# testImg = fill(RGB(0, 0, 0), object.sizeY, object.sizeX)         
-# maxnorm = norm([object.sizeY, object.sizeX])
-# testImg[i, j] = RGB{N0f8}(norm(Δ)/maxnorm, norm(Δ)/maxnorm, norm(Δ)/maxnorm)
-# return testImg
-
     function __interpolateVariation__(object::KelvinletsObject,
                                       allΔ::Array{Float64, 3}
             )::Array{RGB{N0f8}, 2}
@@ -442,12 +429,13 @@ module KelvinletsImage
     end
 
     """
-        grab(object::KelvinletsObject, x0::Array{Int64}, force::Array{Float64}, ϵ::Float64)
+        grab(object::KelvinletsObject, x0::Array{Int64}, force::Array{Float64}, ϵ::Float64, heatmap::Bool)
 
     grabs a point in an image given a KelvinletsObject *obj*,
     a pressure point *x0*,
-    a force vector *force*
-    and a brush size *ϵ*
+    a force vector *force*,
+    a brush size *ϵ*
+    and whether you would like to generate the heatmap of the deformation
     # Example:
     ```julia-repl
         julia> newImage = grab(obj, [100, 100], [100., 0.], 50.)
@@ -456,7 +444,8 @@ module KelvinletsImage
     function grab(object::KelvinletsObject,
                   x0::Array{Int64},
                   force::Array{Float64},
-                  ϵ::Float64
+                  ϵ::Float64,
+                  heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         grabFunc = function(x::Array{Int64})
@@ -471,16 +460,17 @@ module KelvinletsImage
         end
         
         retardationFunc = α -> (cos(π * α) + 1) / 2
-        return __applyVariation__(object, x0, grabFunc, retardationFunc)
+        return __applyVariation__(object, grabFunc, retardationFunc, heatmap)
     end
 
     """
-        scale(object::KelvinletsObject, x0::Array{Int64}, scale::Float64, ϵ::Float64)
+        scale(object::KelvinletsObject, x0::Array{Int64}, scale::Float64, ϵ::Float64, heatmap::Bool)
 
     Scales a point on an image given a KelvinletsObject *obj*,
     a pressure point *x0*,
-    a scale alpha *scale*
-    and a brush size *ϵ*
+    a scale alpha *scale*,
+    a brush size *ϵ*,
+    and whether you would like to generate the heatmap of the deformation
     # Example:
     ```julia-repl
         julia> newImage = scale(obj, [100, 100], 50., 50.)
@@ -489,7 +479,8 @@ module KelvinletsImage
     function scale(object::KelvinletsObject,
                    x0::Array{Int64},
                    force::Float64,
-                   ϵ::Float64
+                   ϵ::Float64,
+                   heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         scaleFunc = function(x::Array{Int64})
@@ -505,16 +496,17 @@ module KelvinletsImage
         end
         
         retardationFunc = α -> (cos(π * α) + 1) / 2
-        return __applyVariation__(object, x0, scaleFunc, retardationFunc)
+        return __applyVariation__(object, scaleFunc, retardationFunc, heatmap)
     end
     
     """
-         pinch(object::KelvinletsObject, x0::Array{Int64}, force::Array{Float64, 2}, ϵ::Float64)
+         pinch(object::KelvinletsObject, x0::Array{Int64}, force::Array{Float64, 2}, ϵ::Float64, heatmap::Bool)
 
     Pinches the image given a KelvinletsObject *obj*,
     a pressure point *x0*,
-    a force matrix *force*
-    and a brush size *ϵ*
+    a force matrix *force*,
+    a brush size *ϵ*,
+    and whether you would like to generate the heatmap of the deformation
     # Example:
     ```julia-repl
         julia> newImage = pinch(obj, [100, 100], [10000. 0. ; 10000. 0.], 50.)
@@ -523,7 +515,8 @@ module KelvinletsImage
     function pinch(object::KelvinletsObject,
                    x0::Array{Int64},
                    force::Array{Float64, 2},
-                   ϵ::Float64
+                   ϵ::Float64,
+                   heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         pinchFunc = function(x::Array{Int64})
@@ -538,16 +531,17 @@ module KelvinletsImage
         end
         
         retardationFunc = α -> (cos(π * α) + 1) / 2
-        return __applyVariation__(object, x0, pinchFunc, retardationFunc)
+        return __applyVariation__(object, pinchFunc, retardationFunc, heatmap)
     end
 
     """
-        grabRectangle(object::KelvinletsObject, points::Array{Int64, 2}, force::Array{Float64}, ϵ::Float64)
+        grabRectangle(object::KelvinletsObject, points::Array{Int64, 2}, force::Array{Float64}, ϵ::Float64, heatmap::Bool)
 
     Grabs the image using a square brush given a KelvinletsObject *obj*,
     a given matrix representation of a rectangle *points* in the following format --> [minY, minX ; maxY, maxX],
     a force vector *force*,
-    and a given brush size *ϵ* (to calculate te variation of outside pixels)
+    a given brush size *ϵ* (to calculate te variation of outside pixels),
+    and whether you would like to generate the heatmap of the deformation
     # Example:
     ```julia-repl
         julia> newImage = grabRectangle(obj, [100 100 ; 250 250], [100., 0.], 50.)
@@ -558,7 +552,7 @@ module KelvinletsImage
                            force::Array{Float64},
                            ϵ::Float64,
                            areaVariation::Function,
-                           heatmap
+                           heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         grabFunc = function(x::Array{Int64},
@@ -600,8 +594,10 @@ module KelvinletsImage
         dd = norm(dx) + 1
         
         return 1/512 * ((At/(Aa + Ab + Ac + Ad)) - 1) * 
-                   (x - #[(c[1] - a[1])/2, (b[2] - a[2])/2]) 
-                   ((1/da) * a + (1/db) * b + (1/dc) * c + (1/dd) * d))/((1/da) + (1/db) + (1/dc) + (1/dd))
+                   (x - 
+                    ((1/da) * a + (1/db) * b + (1/dc) * c + (1/dd) * d)) /
+                    ((1/da) + (1/db) + (1/dc) + (1/dd)
+                   )
     end
 
 
@@ -609,7 +605,7 @@ module KelvinletsImage
                            points::Array{Int64, 2},
                            force::Array{Float64},
                            ϵ::Float64,
-                           heatmap
+                           heatmap::Bool
             )::Array{RGB{N0f8}, 2}
 
         minX, maxX = points[:, 1]
@@ -623,9 +619,6 @@ module KelvinletsImage
         grabFunc = function(x::Array{Int64})
 
             r = __r__(a, b, c, d, x)
-            # if x == [175, 175]
-            #     @show r
-            # end
             rLength = norm(r)
             rϵ = sqrt(rLength^2 + ϵ^2)
             kelvinState = (((object.a - object.b)/rϵ) * I +
