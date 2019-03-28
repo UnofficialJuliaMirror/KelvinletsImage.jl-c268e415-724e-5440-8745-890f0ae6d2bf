@@ -1,5 +1,5 @@
 module triangleInterpolator
-    using Images
+    using ...Images
     export rasterizationBBOX
 
     function pointLine(x::Float64,
@@ -15,9 +15,9 @@ module triangleInterpolator
                          ay::Float64,
                          bx::Float64,
                          by::Float64,
-                         colorA::RGB{N0f8},
-                         colorB::RGB{N0f8}
-            )::Tuple{Float64, Float64, Float64, Float64, RGB{N0f8}, RGB{N0f8}}
+                         colorA::RGB{Float64},
+                         colorB::RGB{Float64}
+            )::Tuple{Float64, Float64, Float64, Float64, RGB{Float64}, RGB{Float64}}
         buf_x = ax
         buf_y = ay
         ax = bx
@@ -28,7 +28,7 @@ module triangleInterpolator
         colorBuf = colorA
         colorA = colorB
         colorB = colorBuf
-        
+
         return ax, ay, bx, by, colorA, colorB
     end
     function validate_entry(ax::Float64,
@@ -37,10 +37,10 @@ module triangleInterpolator
                             by::Float64,
                             cx::Float64,
                             cy::Float64,
-                            colorA::RGB{N0f8},
-                            colorB::RGB{N0f8},
-                            colorC::RGB{N0f8}
-            )::Tuple{Float64, Float64, Float64, Float64, Float64, Float64, RGB{N0f8}, RGB{N0f8}, RGB{N0f8}}
+                            colorA::RGB{Float64},
+                            colorB::RGB{Float64},
+                            colorC::RGB{Float64}
+            )::Tuple{Float64, Float64, Float64, Float64, Float64, Float64, RGB{Float64}, RGB{Float64}, RGB{Float64}}
         ab = [bx-ax, by-ay]
         bc = [cx-bx, cy-by]
         ca = [ax-cx, ay-cy]
@@ -64,10 +64,10 @@ module triangleInterpolator
                                by::Float64,
                                cx::Float64,
                                cy::Float64,
-                               colorA::RGB{N0f8},
-                               colorB::RGB{N0f8},
-                               colorC::RGB{N0f8}
-            )::RGB{N0f8}
+                               colorA::RGB{Float64},
+                               colorB::RGB{Float64},
+                               colorC::RGB{Float64}
+            )::RGB{Float64}
         ab = [bx-ax, by-ay]
         bc = [cx-bx, cy-by]
         ca = [ax-cx, ay-cy]
@@ -104,13 +104,13 @@ module triangleInterpolator
         end
         return maxHeight, minHeight, maxWidth, minWidth
     end
-    function rasterizationBBOX(img::Array{RGB{N0f8}, 2},
-                               A::Array{Float64}, 
+    function rasterizationBBOX(img::Array{RGB{Float64}, 2},
+                               A::Array{Float64},
                                B::Array{Float64},
                                C::Array{Float64},
-                               colorA::RGB{N0f8},
-                               colorB::RGB{N0f8},
-                               colorC::RGB{N0f8}
+                               colorA::RGB{Float64},
+                               colorB::RGB{Float64},
+                               colorC::RGB{Float64}
             )
 
         maxHeight, minHeight, maxWidth, minWidth = setupBBOX(A, B, C, size(img)[2], size(img)[1])
