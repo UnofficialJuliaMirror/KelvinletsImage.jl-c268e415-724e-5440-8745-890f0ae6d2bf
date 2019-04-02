@@ -12,13 +12,13 @@ plot(plot(new), size=(512,512))
 png("/home/ghaetinger/Desktop/allPixelsRef.png")
 points = [100 100; 75 125; 100 150; 150 150; 175 125; 150 100]
 
-new = grabPolygon(obj, points, [100., 100.], 50., false)
-heat = grabPolygon(obj, points, [100., 100.], 50., true)
-newGrid = grabPolygon(gridObj, points, [100., 100.], 50., false)
+new = grabRectangleALL(obj, [175 175; 200 200], [200., 200.], 250., false)
+heat = grabRectangleALL(obj, [175 175; 200 200], [200., 200.], 250., true)
+newGrid = grabRectangleALL(gridObj, [175 175; 200 200], [200., 200.], 250., false)
 unrestr = load("/home/ghaetinger/Desktop/hexaUnrestr.png")
-plot(plot(new), plot(heat), plot(newGrid), plot(unrestr), size=(1000, 1000))
+plot(plot(new), plot(heat), plot(newGrid), size=(1000, 1000))
 png("/home/ghaetinger/Desktop/hexaPoly.png")
-png("/home/ghaetinger/Desktop/hexaGrid.png")
+png("/home/gghaetinger/Desktop/200,200,250.png")
 
 save("/home/ghaetinger/Desktop/hexaUnrestr.png", unrestr)
 new = load("/home/ghaetinger/Desktop/hexaNew.png")

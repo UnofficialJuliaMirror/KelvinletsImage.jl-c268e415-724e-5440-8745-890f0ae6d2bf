@@ -2,7 +2,7 @@ module KelvinletsImage
     using Images, ProgressMeter, ImageView, LinearAlgebra
     include("geometryAnalisys.jl"); include("KelvinletsObject.jl"); include("variationApplier.jl")
     using .KelvinletsObject, .variationApplier, .geometryAnalisys
-    export kelvinletsObject, grab, scale, pinch, grabRectangle, grabPolygon, makeVideo
+    export kelvinletsObject, grab, scale, pinch, grabRectangle, grabPolygon, makeVideo, grabRectangleALL
 
     """
         grab(object::kelvinletsObject, x0::Array{Int64}, force::Array{Float64}, ϵ::Float64, heatmap::Bool)
@@ -35,7 +35,8 @@ module KelvinletsImage
             object.c * ϵ * kelvinState * force
         end
 
-        retardationFunc = α -> (cos(π * α) + 1) / 2
+        # retardationFunc = α -> (cos(π * α) + 1) / 2
+        retardationFunc = α -> (1/(2^(1/4)))*(cos(π * α) + 1)^(1/4)
         return __applyVariation__(object, grabFunc, retardationFunc, heatmap)
     end
 
@@ -149,10 +150,43 @@ module KelvinletsImage
             object.c * ϵ * kelvinState * force
         end
 
-        retardationFunc = α -> (cos(π * α) + 1) / 2
+        # retardationFunc = α -> (cos(π * α) + 1) / 2
         # retardationFunc = α -> (2/sqrt(2))*(cos(π * α) + 1)^(1/2) / 2
-        # retardationFunc = α -> (1/(2^(1/4)))*(cos(π * α) + 1)^(1/4)
-        return __applyVariation__(object, grabFunc, retardationFunc, heatmap)
+        retardationFunc = α -> (1/(2^(1/4)))*(cos(π * α) + 1)^(1/4)
+        return __applyAllAreaBasedAreaVariation__(object, points, grabFunc, retardationFunc, heatmap)
+    end
+
+
+    function grabRectangleALL(object::kelvinletsObject,
+                           points::Array{Int64, 2},
+                           force::Array{Float64},
+                           ϵ::Float64,
+                           heatmap::Bool
+            )::Array{RGB{Float64}, 2}
+
+        minX, maxX = points[:, 1]
+        minY, maxY = points[:, 2]
+
+        a = [minY, minX]
+        b = [minY, maxX]
+        c = [maxY, minX]
+        d = [maxY, maxX]
+
+        grabFunc = function(x::Array{Int64}, x0::Array{Int64})
+
+            r = x - x0
+            rLength = norm(r)
+            rϵ = sqrt(rLength^2 + ϵ^2)
+            kelvinState = (((object.a - object.b)/rϵ) * I +
+                            (object.b / rϵ^3) * r * r' +
+                            (object.a / 2) * (ϵ^2 / rϵ^3) * I)
+            object.c * ϵ * kelvinState * force
+        end
+
+        # retardationFunc = α -> (cos(π * α) + 1) / 2
+        # retardationFunc = α -> (2/sqrt(2))*(cos(π * α) + 1)^(1/2) / 2
+        retardationFunc = α -> (1/(2^(1/4)))*(cos(π * α) + 1)^(1/4)
+        return __applyAllAreaBasedAreaVariation__(object, points, grabFunc, retardationFunc, heatmap)
     end
 
     """

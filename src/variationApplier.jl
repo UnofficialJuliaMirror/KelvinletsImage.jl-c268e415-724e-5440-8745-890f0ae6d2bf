@@ -1,7 +1,7 @@
 module variationApplier
     include("triangleInterpolator.jl")
     using ..KelvinletsObject, .triangleInterpolator, ..LinearAlgebra, ..Images, ..ProgressMeter
-    export  __applyVariation__, applyAreaVariation__, __applyCloserAreaVariation__, __applyPerimeterBasedAreaVariation__, __applyEdgeBasedAreaVariation__, __applyPonderedAvgAreaVariation__
+    export  __applyVariation__, applyAreaVariation__, __applyCloserAreaVariation__, __applyAllAreaBasedAreaVariation__, __applyEdgeBasedAreaVariation__, __applyPonderedAvgAreaVariation__
 
     function __applyVariation__(object::kelvinletsObject,
                                 variationFunction::Function,
@@ -174,7 +174,7 @@ module variationApplier
 
     end
 
-    function __applyPerimeterBasedAreaVariation__(object::kelvinletsObject,
+    function __applyAllAreaBasedAreaVariation__(object::kelvinletsObject,
                                     points::Array{Int64, 2},
                                     variationFunction::Function,
                                     retardationFunction::Function,
